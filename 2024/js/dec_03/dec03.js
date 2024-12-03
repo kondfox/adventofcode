@@ -1,9 +1,7 @@
 export function part1(input) {
   return parse(input)
     .match(/mul\(\d{1,3},\d{1,3}\)/g)
-    .map(mul => mul.match(/\d{1,3}/g).map(n => parseInt(n)))
-    .map(([a, b]) => a * b)
-    .reduce((acc, cur) => acc + cur, 0)
+    .reduce((acc, mul) => acc + mul.match(/\d{1,3}/g).map(Number).reduce((a, b) => a * b), 0)
 }
 
 export function part2(input) {
