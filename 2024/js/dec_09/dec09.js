@@ -1,63 +1,49 @@
 export function part1(input) {
-  return solve(input, defregment1)
+  return solve(input, true)
 }
 
 export function part2(input) {
-  return solve(input, defregment2)
+  return solve(input, false)
 }
 
-function solve(input, defregmentator) {
-  return defregmentator(fileMap(parse(input)))
+function solve(input, isChunked) {
+  return defregment(diskMap(parse(input)), isChunked)
     .flatMap(n => [...new Array(n.files).fill(n.id), ...new Array(n.free).fill(0)])
     .reduce((acc, c, i) => acc + c * i)
 }
 
-function defregment1(fileMap) {
-  let defregmented = [...fileMap.map(n => ({ ...n }))]
-  let i = defregmented.length - 1
-  let current = fileMap[i]
-  while (i > 0) {
-    const freeSpaceLoc = defregmented.findIndex(f => f.free > 0)
-    const defregmentedNodeIndex = defregmented.findLastIndex(n => n.id === fileMap[i].id)
-    current = defregmented[defregmentedNodeIndex]
-    if (freeSpaceLoc !== -1 && freeSpaceLoc < defregmentedNodeIndex) {
-      const nodeFiles = Math.min(defregmented[freeSpaceLoc].free, current.files)
-      const node = { id: fileMap[i].id, files: nodeFiles, free: defregmented[freeSpaceLoc].free - nodeFiles }
-      current.files -= nodeFiles
-      defregmented[freeSpaceLoc].free = 0
-      if (current.files > 0) {
-        i++
+function defregment(diskMap, isChunked) {
+  let defregmented = [...diskMap.map(n => ({ ...n }))]
+  for (let id = diskMap.length - 1, current = diskMap[id]; id > 0;) {
+    const spaceRequired = isChunked ? 1 : diskMap[id].files
+    const freeIndex = defregmented.findIndex(f => f.free >= spaceRequired)
+    const selected = defregmented[freeIndex]
+    const currentIndex = defregmented.findLastIndex(n => n.id === diskMap[id].id)
+    current = defregmented[currentIndex]
+    if (freeIndex >= 0 && freeIndex < currentIndex) {
+      const files = isChunked ? Math.min(selected.free, current.files) : current.files
+      const node = { id: diskMap[id].id, files: files, free: selected.free - files }
+      if (!isChunked) {
+        defregmented[currentIndex - 1].free += current.files + current.free
       }
-      defregmented = [...defregmented.slice(0, freeSpaceLoc + 1), node, ...defregmented.slice(freeSpaceLoc + 1).filter(f => f.files > 0)]
+      current.files -= files
+      selected.free = 0
+      defregmented = [
+        ...defregmented.slice(0, freeIndex + 1),
+        node,
+        ...defregmented.slice(freeIndex + 1).filter(f => f.files > 0)
+      ]
     }
-    i--
+    if (freeIndex < 0 || freeIndex >= currentIndex || current.files === 0) {
+      id--
+    }
   }
   return defregmented
 }
 
-function defregment2(fileMap) {
-  let defregmented = [...fileMap]
-  let i = defregmented.length - 1
-  while (i > 0) {
-    const freeSpaceLoc = defregmented.findIndex(f => f.free >= fileMap[i].files)
-    const defregmentedNodeIndex = defregmented.findIndex(n => n.id === fileMap[i].id)
-    if (freeSpaceLoc !== -1 && freeSpaceLoc < defregmentedNodeIndex) {
-      const node = { id: fileMap[i].id, files: fileMap[i].files, free: defregmented[freeSpaceLoc].free - fileMap[i].files }
-      defregmented[defregmentedNodeIndex - 1].free += defregmented[defregmentedNodeIndex].files + defregmented[defregmentedNodeIndex].free
-      defregmented[freeSpaceLoc].free = 0
-      defregmented = [...defregmented.slice(0, freeSpaceLoc + 1), node, ...defregmented.slice(freeSpaceLoc + 1).filter(f => f.id !== node.id)]
-    }
-    i--
-  }
-  return defregmented
-}
-
-function fileMap(diskMap) {
-  let fm = []
-  for (let i = 0; i <  diskMap.length; i += 2) {
-    fm.push({ id: i / 2, files: diskMap[i], free: diskMap[i + 1] || 0 })
-  }
-  return fm
+function diskMap(diskMap) {
+  return Array.from({ length: Math.ceil(diskMap.length / 2) }, (_, i) => i)
+    .map(i => ({ id: i, files: diskMap[i * 2], free: diskMap[i * 2 + 1] || 0 }))
 }
 
 function parse(input) {
