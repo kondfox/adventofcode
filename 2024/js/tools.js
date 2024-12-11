@@ -9,3 +9,8 @@ export const windowed = (array, size) => {
 export const allPairs = array => {
   return array.flatMap((x, i) => array.slice(i + 1).map(y => [x, y]))
 }
+
+export const combineByKey = (objArray, key) => objArray.reduce((grouped, obj) => {
+  grouped[obj[key]] = obj
+  return grouped
+}, {})

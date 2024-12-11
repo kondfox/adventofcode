@@ -1,3 +1,5 @@
+import { combineByKey } from '../tools.js'
+
 export function part1(input) {
   return solve(input, 25)
 }
@@ -7,50 +9,46 @@ export function part2(input) {
 }
 
 function solve(input, limit) {
-  const memo = parse(input).reduce((mem, n) => {
-    mem[n] = node(n, 0)
-    return mem
-  }, {})
-
+  const memo = combineByKey(parse(input).map(n => stone(n, 0)), 'number')
   for (let i = 1; i <= limit; i++) {
-    Object.values(memo)
-      .filter(({ visited }) => visited[i - 1])
-      .forEach(({ next, visited }) => {
-        next.forEach(n => visit(n, i, visited[i - 1], memo))
-      })
+    blink(memo, i)
   }
-
   return Object.values(memo)
-    .filter(node => node.visited[limit])
-    .reduce((acc, node) => acc + node.visited[limit], 0)
+    .filter(({ replaced }) => replaced[limit])
+    .reduce((acc, stone) => acc + stone.replaced[limit], 0)
+}
+
+function blink(memo, i) {
+  Object.values(memo)
+    .filter(({ replaced }) => replaced[i - 1])
+    .forEach(({ next, replaced }) => next.forEach(n => replace(n, i, replaced[i - 1], memo)))
 }
 
 function next(n) {
-  const rules = [
-    n => n === '0',
-    n => n.length % 2 === 0,
-    n => true,
-  ]
-  const actions = [
-    n => ['1'],
-    n => [n.substring(0, n.length / 2), n.substring(n.length / 2)].map(Number).map(n => n.toString()),
-    n => [(Number(n) * 2024).toString()],
-  ]
-  return actions[rules.findIndex(rule => rule(n))](n)
+  return [
+    n => ({ isApply: n === '0', replacement: ['1'] }),
+    n => ({
+      isApply: n.length % 2 === 0,
+      replacement: [
+        n.substring(0, n.length / 2),
+        n.substring(n.length / 2),
+      ].map(Number).map(n => n.toString()) }),
+    n => ({ isApply: true, replacement: [(Number(n) * 2024).toString()] }),
+  ].find(rule => rule(n).isApply)(n).replacement
 }
 
-function node(n, i, inc = 1) {
-  return { n, next: next(n), visited: { [i]: inc } }
+function stone(number, i, times = 1) {
+  return { number, next: next(number), replaced: { [i]: times } }
 }
 
-function visit(n, i, inc, memo) {
-  if (!memo[n]) {
-    memo[n] = node(n, i, inc)
+function replace(number, i, times, memo) {
+  if (!memo[number]) {
+    memo[number] = stone(number, i, times)
   } else {
-    if (memo[n].visited[i]) {
-      memo[n].visited[i] += inc
+    if (memo[number].replaced[i]) {
+      memo[number].replaced[i] += times
     } else {
-      memo[n].visited[i] = inc
+      memo[number].replaced[i] = times
     }
   }
 }
