@@ -1,26 +1,19 @@
-export function part1(input) {
-  return parse(input).reduce((acc, rotation) => {
-    const inc = (acc.current + rotation) % 100
-    const current = inc < 0 ? 100 + inc : inc
-    return { current, zeros: acc.zeros + (current === 0 ? 1 : 0) }
-  }, { current: 50, zeros: 0 }).zeros
-}
+const parse = input => input.map(row => (row[0] === 'L' ? -1 : 1) * Number(row.slice(1)))
 
-export function part2(input) {
-  return parse(input).reduce((acc, rotation) => {
-    const inc = acc.current + (rotation % 100)
-    const mod = inc % 100
-    const current = mod < 0 ? 100 + mod : mod
+const solve = (input, scoreFn) =>
+  parse(input).reduce(({ current, zeros }, rotation) => {
+    const next = (((current + rotation) % 100) + 100) % 100
     return {
-      current,
-      zeros: acc.zeros +
-        Math.floor(Math.abs(rotation) / 100) +
-        ((inc <= 0 || inc >= 100) && acc.current !== 0 ? 1 : 0)
+      current: next,
+      zeros: zeros + scoreFn(current, rotation, next)
     }
   }, { current: 50, zeros: 0 }).zeros
-}
 
-function parse(input) {
-  return input
-    .map(row => (row[0] === 'L' ? -1 : 1) * Number(row.slice(1)))
-}
+export const part1 = input => solve(input, (_c, _r, next) => next === 0 ? 1 : 0)
+
+export const part2 = input =>
+  solve(input, (current, rotation) => {
+    const partial = current + (rotation % 100)
+    return Math.floor(Math.abs(rotation) / 100) +
+      ((partial <= 0 || partial >= 100) && current !== 0 ? 1 : 0)
+  })
