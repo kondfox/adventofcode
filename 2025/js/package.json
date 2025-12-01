@@ -1,0 +1,22 @@
+{
+  "name": "2025",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "aoc": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/kondfox/adventureofcode.git"
+  },
+  "author": "kondfox",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kondfox/adventureofcode/issues"
+  },
+  "homepage": "https://github.com/kondfox/adventureofcode#readme",
+  "description": "",
+  "packageManager": "yarn@4.3.1"
+}
